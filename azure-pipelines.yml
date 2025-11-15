@@ -1,0 +1,97 @@
+trigger: none   # Trigger manually or via webhook after CI is done
+
+variables:
+  containerRepoECR: 'ghcr.io/sadiqms/flask-app-ecr'
+  containerRepoACR: 'ghcr.io/sadiqms/flask-app-acr'
+  k8sNamespace: 'default'
+  releaseName: 'flask-app'
+  # URL to tag.txt published by CI (GitHub Release asset)
+  imageTagUrl: 'https://github.com/<org>/<repo>/releases/download/image-tag-<run>-<sha>/tag.txt'
+
+stages:
+# --- Staging Deployment ---
+- stage: Staging
+  displayName: "Deploy to Staging"
+  jobs:
+  - deployment: StagingDeployment
+    displayName: "Staging deployment"
+    environment: "staging"  ## Auto Deploy -- No approval needed
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - checkout: self
+            - bash: |
+                echo "Downloading tag.txt from GitHub Release..."
+                curl -L $(imageTagUrl) -o tag.txt
+                TAG=$(cat tag.txt)
+                echo "Deploying to staging with Helm using $TAG"
+                helm upgrade --install $(releaseName) ./helm-chart \
+                  --namespace $(k8sNamespace) \
+                  --set image.repository=$(containerRepoECR) \
+                  --set image.tag=$TAG
+              displayName: "Helm upgrade to staging"
+
+# --- Production Deployment ---
+- stage: Production
+  displayName: "Deploy to Production"
+  dependsOn: Staging
+  jobs:
+  - deployment: ProdDeployment
+    displayName: "Production deployment"
+    environment: "production"  # Manual approval + health gate configured in Environments UI
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - checkout: self
+            - bash: |
+                echo "Downloading tag.txt from GitHub Release..."
+                curl -L $(imageTagUrl) -o tag.txt
+                TAG=$(cat tag.txt)
+                echo "Deploying to production with Helm using tag $TAG"
+                helm upgrade --install $(releaseName) ./helm-chart \
+                  --namespace $(k8sNamespace) \
+                  --set image.repository=$(containerRepoACR) \
+                  --set image.tag=$TAG
+              displayName: "Helm upgrade to production"
+            # Save last known-good tag for rollback
+            - bash: |
+                TAG=$(cat tag.txt)
+                echo "Saving $TAG as last known-good tag"
+                echo "$TAG" > good_tag.txt
+              displayName: "Save last known-good tag"
+            - task: PublishPipelineArtifact@1
+              inputs:
+                targetPath: good_tag.txt
+                artifact: good-tag
+                publishLocation: pipeline
+
+# --- Rollback Stage ---
+- stage: Rollback
+  displayName: "Rollback on failed health gate"
+  dependsOn:
+    - Staging
+    - Production
+  condition: |
+    or(
+      failed('Staging'),
+      failed('Production')
+    )
+  jobs:
+  - job: Revert
+    displayName: "Rollback to last known-good"
+    steps:
+      - checkout: self
+      - task: DownloadPipelineArtifact@2
+        inputs:
+          artifact: good-tag
+          path: $(Pipeline.Workspace)
+      - bash: |
+          echo "Rolling back with Helm to last known-good tag..."
+          GOOD_TAG=$(cat $(Pipeline.Workspace)/good_tag.txt)
+          helm upgrade --install $(releaseName) ./helm-chart \
+            --namespace $(k8sNamespace) \
+            --set image.repository=$(containerRepoECR) \
+            --set image.tag=$GOOD_TAG
+        displayName: "Helm rollback"
