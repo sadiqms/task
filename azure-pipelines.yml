@@ -5,8 +5,7 @@ variables:
   containerRepoACR: 'ghcr.io/sadiqms/flask-app-acr'
   k8sNamespace: 'default'
   releaseName: 'flask-app'
-  # URL to tag.txt published by CI (GitHub Release asset)
-  imageTagUrl: 'https://github.com/<org>/<repo>/releases/download/image-tag-<run>-<sha>/tag.txt'
+  githubRepo: 'sadiqms/task'   # repo where CI publishes releases
 
 stages:
 # --- Staging Deployment ---
@@ -22,8 +21,18 @@ stages:
           steps:
             - checkout: self
             - bash: |
-                echo "Downloading tag.txt from GitHub Release..."
-                curl -L $(imageTagUrl) -o tag.txt
+                echo "Fetching latest release info from GitHub API..."
+                curl -s https://api.github.com/repos/$(githubRepo)/releases/latest > latest.json
+
+                TAG_URL=$(jq -r '.assets[] | select(.name=="tag.txt") | .browser_download_url' latest.json)
+                if [ -z "$TAG_URL" ]; then
+                  echo "No tag.txt asset found in latest release!"
+                  exit 1
+                fi
+
+                echo "Downloading tag.txt from $TAG_URL"
+                curl -L "$TAG_URL" -o tag.txt
+
                 TAG=$(cat tag.txt)
                 echo "Deploying to staging with Helm using $TAG"
                 helm upgrade --install $(releaseName) ./helm-chart \
@@ -46,8 +55,18 @@ stages:
           steps:
             - checkout: self
             - bash: |
-                echo "Downloading tag.txt from GitHub Release..."
-                curl -L $(imageTagUrl) -o tag.txt
+                echo "Fetching latest release info from GitHub API..."
+                curl -s https://api.github.com/repos/$(githubRepo)/releases/latest > latest.json
+
+                TAG_URL=$(jq -r '.assets[] | select(.name=="tag.txt") | .browser_download_url' latest.json)
+                if [ -z "$TAG_URL" ]; then
+                  echo "No tag.txt asset found in latest release!"
+                  exit 1
+                fi
+
+                echo "Downloading tag.txt from $TAG_URL"
+                curl -L "$TAG_URL" -o tag.txt
+
                 TAG=$(cat tag.txt)
                 echo "Deploying to production with Helm using tag $TAG"
                 helm upgrade --install $(releaseName) ./helm-chart \
@@ -55,12 +74,14 @@ stages:
                   --set image.repository=$(containerRepoACR) \
                   --set image.tag=$TAG
               displayName: "Helm upgrade to production"
+
             # Save last known-good tag for rollback
             - bash: |
                 TAG=$(cat tag.txt)
                 echo "Saving $TAG as last known-good tag"
                 echo "$TAG" > good_tag.txt
               displayName: "Save last known-good tag"
+
             - task: PublishPipelineArtifact@1
               inputs:
                 targetPath: good_tag.txt
