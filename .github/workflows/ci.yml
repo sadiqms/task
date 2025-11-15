@@ -4,6 +4,9 @@ on:
   push:
     branches: [ "main" ]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -66,8 +69,7 @@ jobs:
           tag_name: image-tag-${{ github.run_number }}-${{ github.sha }}
           name: "Image Tag ${{ github.run_number }}-${{ github.sha }}"
           body: "Tag for deployment"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
