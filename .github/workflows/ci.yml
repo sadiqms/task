@@ -29,25 +29,25 @@ jobs:
 
       - name: Tag for GHCR ECR alias
         run: |
-          docker tag flask-app ghcr.io/${{ github.repository_owner }}/flask-app-ecr:${{ steps.commit_count.outputs.count }}
-          docker tag flask-app ghcr.io/${{ github.repository_owner }}/flask-app-ecr:latest
+          docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-ecr:${{ steps.commit_count.outputs.count }}
+          docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-ecr:latest
 
       - name: Tag for GHCR ACR alias
         run: |
-          docker tag flask-app ghcr.io/${{ github.repository_owner }}/flask-app-acr:${{ steps.commit_count.outputs.count }}
-          docker tag flask-app ghcr.io/${{ github.repository_owner }}/flask-app-acr:latest
+          docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-acr:${{ steps.commit_count.outputs.count }}
+          docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-acr:latest
 
       - name: Push to GHCR ECR alias
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/flask-app-ecr:${{ steps.commit_count.outputs.count }}
-          docker push ghcr.io/${{ github.repository_owner }}/flask-app-ecr:latest
+          docker push ghcr.io/${{ github.actor }}/flask-app-ecr:${{ steps.commit_count.outputs.count }}
+          docker push ghcr.io/${{ github.actor }}/flask-app-ecr:latest
 
       - name: Push to GHCR ACR alias
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/flask-app-acr:${{ steps.commit_count.outputs.count }}
-          docker push ghcr.io/${{ github.repository_owner }}/flask-app-acr:latest
+          docker push ghcr.io/${{ github.actor }}/flask-app-acr:${{ steps.commit_count.outputs.count }}
+          docker push ghcr.io/${{ github.actor }}/flask-app-acr:latest
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ghcr.io/${{ github.repository_owner }}/flask-app-ecr:${{ steps.commit_count.outputs.count }}
+          image-ref: ghcr.io/${{ github.actor }}/flask-app-ecr:${{ steps.commit_count.outputs.count }}
