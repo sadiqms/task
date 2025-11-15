@@ -15,11 +15,6 @@ jobs:
         id: commit_count
         run: echo "count=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
       - name: Checkout source
         uses: actions/checkout@v4
 
@@ -32,25 +27,25 @@ jobs:
 
       - name: Tag for local ECR 
         run: |
-          docker tag flask-hello-world localhost:5000/flask-hello-world:${{ github.sha }}
+          docker tag flask-hello-world localhost:5000/flask-hello-world:${{ steps.commit_count.outputs.count }}
           docker tag flask-hello-world localhost:5000/flask-hello-world:latest
 
       - name: Tag for local ACR 
         run: |
-          docker tag flask-hello-world localhost:5001/flask-hello-world:${{ github.sha }}
+          docker tag flask-hello-world localhost:5001/flask-hello-world:${{ steps.commit_count.outputs.count }}
           docker tag flask-hello-world localhost:5001/flask-hello-world:latest
 
       - name: Push to local ECR 
         run: |
-          docker push localhost:5000/flask-hello-world:${{ github.sha }}
+          docker push localhost:5000/flask-hello-world:${{ steps.commit_count.outputs.count }}
           docker push localhost:5000/flask-hello-world:latest
 
       - name: Push to local ACR 
         run: |
-          docker push localhost:5001/flask-hello-world:${{ github.sha }}
+          docker push localhost:5001/flask-hello-world:${{ steps.commit_count.outputs.count }}
           docker push localhost:5001/flask-hello-world:latest
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: localhost:5000/flask-hello-world:${{ github.sha }}
+          image-ref: localhost:5000/flask-hello-world:${{ steps.commit_count.outputs.count }}
