@@ -27,22 +27,22 @@ jobs:
           cd flask-app
           docker build -t flask-app .
 
-      - name: Tag for GHCR ECR alias
+      - name: Tag for GHCR ECR 
         run: |
           docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-ecr:${{ steps.commit_count.outputs.count }}
           docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-ecr:latest
 
-      - name: Tag for GHCR ACR alias
+      - name: Tag for GHCR ACR 
         run: |
           docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-acr:${{ steps.commit_count.outputs.count }}
           docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-acr:latest
 
-      - name: Push to GHCR ECR alias
+      - name: Push to GHCR ECR 
         run: |
           docker push ghcr.io/${{ github.actor }}/flask-app-ecr:${{ steps.commit_count.outputs.count }}
           docker push ghcr.io/${{ github.actor }}/flask-app-ecr:latest
 
-      - name: Push to GHCR ACR alias
+      - name: Push to GHCR ACR 
         run: |
           docker push ghcr.io/${{ github.actor }}/flask-app-acr:${{ steps.commit_count.outputs.count }}
           docker push ghcr.io/${{ github.actor }}/flask-app-acr:latest
