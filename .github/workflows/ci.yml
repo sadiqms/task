@@ -1,4 +1,4 @@
-name: CI Build and Deploy
+name: CI_Build_Deploy
 
 on:
   push:
@@ -59,13 +59,17 @@ jobs:
           TAG="${{ github.run_number }}-${{ github.sha }}"
           echo "$TAG" > tag.txt
 
-      - name: Upload combined tag artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload tag.txt to GitHub Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: image-tag
-          path: tag.txt
+          files: tag.txt
+          tag_name: image-tag-${{ github.run_number }}-${{ github.sha }}
+          name: "Image Tag ${{ github.run_number }}-${{ github.sha }}"
+          body: "Tag for deployment"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ghcr.io/${{ github.actor }}/flask-app-ecr:${{ github.sha }}
+          image-ref: ghcr.io/${{ github.actor }}/flask-app-ecr:${{ github.run_number }}-${{ github.sha }}
