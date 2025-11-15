@@ -23,29 +23,29 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t flask-hello-world .
+          docker build -t flask-app .
 
       - name: Tag for local ECR 
         run: |
-          docker tag flask-hello-world localhost:5000/flask-hello-world:${{ steps.commit_count.outputs.count }}
-          docker tag flask-hello-world localhost:5000/flask-hello-world:latest
+          docker tag flask-app localhost:5000/flask-app:${{ steps.commit_count.outputs.count }}
+          docker tag flask-app localhost:5000/flask-app:latest
 
       - name: Tag for local ACR 
         run: |
-          docker tag flask-hello-world localhost:5001/flask-hello-world:${{ steps.commit_count.outputs.count }}
-          docker tag flask-hello-world localhost:5001/flask-hello-world:latest
+          docker tag flask-app localhost:5001/flask-app:${{ steps.commit_count.outputs.count }}
+          docker tag flask-app localhost:5001/flask-app:latest
 
       - name: Push to local ECR 
         run: |
-          docker push localhost:5000/flask-hello-world:${{ steps.commit_count.outputs.count }}
-          docker push localhost:5000/flask-hello-world:latest
+          docker push localhost:5000/flask-app:${{ steps.commit_count.outputs.count }}
+          docker push localhost:5000/flask-app:latest
 
       - name: Push to local ACR 
         run: |
-          docker push localhost:5001/flask-hello-world:${{ steps.commit_count.outputs.count }}
-          docker push localhost:5001/flask-hello-world:latest
+          docker push localhost:5001/flask-app:${{ steps.commit_count.outputs.count }}
+          docker push localhost:5001/flask-app:latest
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: localhost:5000/flask-hello-world:${{ steps.commit_count.outputs.count }}
+          image-ref: localhost:5000/flask-app:${{ steps.commit_count.outputs.count }}
