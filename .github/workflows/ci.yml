@@ -54,6 +54,17 @@ jobs:
           docker push ghcr.io/${{ github.actor }}/flask-app-acr:$TAG
           docker push ghcr.io/${{ github.actor }}/flask-app-acr:latest
 
+      - name: Save the tag
+        run: |
+          TAG="${{ github.run_number }}-${{ github.sha }}"
+          echo "$TAG" > tag.txt
+
+      - name: Upload combined tag artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-tag
+          path: tag.txt
+
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
