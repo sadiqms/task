@@ -23,6 +23,7 @@ jobs:
 
       - name: Build Docker image
         run: |
+          cd flask-app
           docker build -t flask-app .
 
       - name: Tag for local ECR 
