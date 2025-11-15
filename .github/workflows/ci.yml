@@ -32,26 +32,26 @@ jobs:
 
       - name: Tag images for GHCR ECR alias
         run: |
-          docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-ecr:${{ steps.commit_count.outputs.count }}
-          docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-ecr:${{ github.sha }}
+          TAG="${{ github.run_number }}-${{ github.sha }}"
+          docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-ecr:$TAG
           docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-ecr:latest
 
       - name: Tag images for GHCR ACR alias
         run: |
-          docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-acr:${{ steps.commit_count.outputs.count }}
-          docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-acr:${{ github.sha }}
+          TAG="${{ github.run_number }}-${{ github.sha }}"
+          docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-acr:$TAG
           docker tag flask-app ghcr.io/${{ github.actor }}/flask-app-acr:latest
 
       - name: Push to GHCR ECR alias
         run: |
-          docker push ghcr.io/${{ github.actor }}/flask-app-ecr:${{ steps.commit_count.outputs.count }}
-          docker push ghcr.io/${{ github.actor }}/flask-app-ecr:${{ github.sha }}
+          TAG="${{ github.run_number }}-${{ github.sha }}"
+          docker push ghcr.io/${{ github.actor }}/flask-app-ecr:$TAG
           docker push ghcr.io/${{ github.actor }}/flask-app-ecr:latest
 
       - name: Push to GHCR ACR alias
         run: |
-          docker push ghcr.io/${{ github.actor }}/flask-app-acr:${{ steps.commit_count.outputs.count }}
-          docker push ghcr.io/${{ github.actor }}/flask-app-acr:${{ github.sha }}
+          TAG="${{ github.run_number }}-${{ github.sha }}"
+          docker push ghcr.io/${{ github.actor }}/flask-app-acr:$TAG
           docker push ghcr.io/${{ github.actor }}/flask-app-acr:latest
 
       - name: Scan image with Trivy
