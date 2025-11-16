@@ -1,0 +1,31 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "x": 0, "y": 0, "width": 12, "height": 6,
+      "properties": {
+        "title": "ALB 5xx rate (%)",
+        "metrics": [
+          [ "AWS/ApplicationELB", "HTTPCode_Target_5XX_Count", "LoadBalancer", "${alb_arn_suffix}", { "stat": "Sum" } ],
+          [ ".", "RequestCount", ".", ".", { "stat": "Sum", "id": "req" } ],
+          [ { "expression": "IF(req>0,100*HTTPCode_Target_5XX_Count/req,0)", "label": "5xx%", "id": "err_rate", "region": "${aws_region}" } ]
+        ],
+        "period": 60,
+        "region": "us-east-1"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12, "y": 0, "width": 12, "height": 6,
+      "properties": {
+        "title": "ALB TargetResponseTime p95 (s) — /healthz",
+        "metrics": [
+          [ "AWS/ApplicationELB", "TargetResponseTime", "TargetGroup", "${target_group_arn_suffix}", "LoadBalancer", "${alb_arn_suffix}", { "stat": "p95" } ]
+        ],
+        "period": 60,
+        "region": "us-east-1"
+      }
+    }
+  ]
+}
+
