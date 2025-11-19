@@ -35,7 +35,7 @@ stages:
 
                 TAG=$(cat tag.txt)
                 echo "Deploying to staging with Helm using $TAG"
-                helm upgrade --install $(releaseName) ./helm-chart \
+                helm upgrade --install $(releaseName) ./helm/flask-app \
                   --namespace $(k8sNamespace) \
                   --set image.repository=$(containerRepoECR) \
                   --set image.tag=$TAG
@@ -69,7 +69,7 @@ stages:
 
                 TAG=$(cat tag.txt)
                 echo "Deploying to production with Helm using tag $TAG"
-                helm upgrade --install $(releaseName) ./helm-chart \
+                helm upgrade --install $(releaseName) ./helm/flask-app \
                   --namespace $(k8sNamespace) \
                   --set image.repository=$(containerRepoACR) \
                   --set image.tag=$TAG
@@ -111,7 +111,7 @@ stages:
       - bash: |
           echo "Rolling back with Helm to last known-good tag..."
           GOOD_TAG=$(cat $(Pipeline.Workspace)/good_tag.txt)
-          helm upgrade --install $(releaseName) ./helm-chart \
+          helm upgrade --install $(releaseName) ./helm/flask-app \
             --namespace $(k8sNamespace) \
             --set image.repository=$(containerRepoECR) \
             --set image.tag=$GOOD_TAG

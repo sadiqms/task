@@ -33,6 +33,14 @@ jobs:
           cd flask-app
           docker build -t flask-app .
 
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ghcr.io/${{ github.actor }}/flask-app-ecr:${{ github.run_number }}-${{ github.sha }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: 1   # Fail pipeline if CRITICAL/HIGH vulnerabilities found
+
       - name: Tag images for GHCR ECR alias
         run: |
           TAG="${{ github.run_number }}-${{ github.sha }}"
@@ -71,7 +79,7 @@ jobs:
           body: "Tag for deployment"
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Scan image with Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ghcr.io/${{ github.actor }}/flask-app-ecr:${{ github.run_number }}-${{ github.sha }}
+      - name: Package Helm chart
+        run: |
+          helm lint helm/flask-app
+          helm package helm/flask-app --destination ./chart-packages
