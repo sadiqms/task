@@ -73,14 +73,20 @@ jobs:
 
       - name: Package Helm chart
         run: |
-          helm lint helm/flask-app
-          helm package helm/flask-app --destination ./chart-packages
+          TAG="${{ github.run_number }}-${{ github.sha }}"
+          CHART_NAME="flask-app"
+          CHART_PATH="helm/${CHART_NAME}"
+
+          # Update Chart.yaml with dynamic version
+          sed -i "s/^version:.*/version: $TAG/" $CHART_PATH/Chart.yaml
+
+          helm lint $CHART_PATH
+          helm package $CHART_PATH --destination ./chart-packages
 
       - name: Push Helm chart to GHCR
         run: |
           TAG="${{ github.run_number }}-${{ github.sha }}"
           CHART_NAME="flask-app"
-          CHART_PATH="helm/${CHART_NAME}"
 
           # Enable OCI support (needed for Helm <3.7)
           export HELM_EXPERIMENTAL_OCI=1
@@ -88,11 +94,13 @@ jobs:
           # Log in to GHCR for Helm
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
 
-          # Push chart with version tag
-          helm push ./chart-packages/${CHART_NAME}-*.tgz oci://ghcr.io/${{ github.actor }}/charts --version $TAG
+          # Push chart with dynamic version
+          helm push ./chart-packages/${CHART_NAME}-*.tgz oci://ghcr.io/${{ github.actor }}/charts
 
-          # Push chart with 'latest' tag
-          helm push ./chart-packages/${CHART_NAME}-*.tgz oci://ghcr.io/${{ github.actor }}/charts --version latest
+          # Repackage with 'latest' version
+          sed -i "s/^version:.*/version: latest/" helm/${CHART_NAME}/Chart.yaml
+          helm package helm/${CHART_NAME} --destination ./chart-packages
+          helm push ./chart-packages/${CHART_NAME}-*.tgz oci://ghcr.io/${{ github.actor }}/charts
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
