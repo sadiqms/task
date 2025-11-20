@@ -3,6 +3,7 @@ trigger: none   # Trigger manually or via webhook after CI is done
 variables:
   containerRepoECR: 'ghcr.io/sadiqms/flask-app-ecr'
   containerRepoACR: 'ghcr.io/sadiqms/flask-app-acr'
+  chartRepo: 'ghcr.io/sadiqms/flask-app'   # Helm chart OCI repo in GHCR
   k8sNamespace: 'default'
   releaseName: 'flask-app'
   githubRepo: 'sadiqms/task'   # repo where CI publishes releases
@@ -34,8 +35,16 @@ stages:
                 curl -L "$TAG_URL" -o tag.txt
 
                 TAG=$(cat tag.txt)
-                echo "Deploying to staging with Helm using $TAG"
-                helm upgrade --install $(releaseName) ./helm/flask-app \
+
+                echo "Logging in to GHCR for Helm..."
+                export HELM_EXPERIMENTAL_OCI=1
+                echo "$(GHCR_PAT)" | helm registry login ghcr.io -u sadiqms --password-stdin
+
+                echo "Pulling Helm chart version $TAG from GHCR..."
+                helm pull oci://$(chartRepo) --version $TAG
+
+                echo "Deploying to staging with Helm using image tag $TAG"
+                helm upgrade --install $(releaseName) flask-app-$TAG.tgz \
                   --namespace $(k8sNamespace) \
                   --set image.repository=$(containerRepoECR) \
                   --set image.tag=$TAG
@@ -68,8 +77,16 @@ stages:
                 curl -L "$TAG_URL" -o tag.txt
 
                 TAG=$(cat tag.txt)
-                echo "Deploying to production with Helm using tag $TAG"
-                helm upgrade --install $(releaseName) ./helm/flask-app \
+
+                echo "Logging in to GHCR for Helm..."
+                export HELM_EXPERIMENTAL_OCI=1
+                echo "$(GHCR_PAT)" | helm registry login ghcr.io -u sadiqms --password-stdin
+
+                echo "Pulling Helm chart version $TAG from GHCR..."
+                helm pull oci://$(chartRepo) --version $TAG
+
+                echo "Deploying to production with Helm using image tag $TAG"
+                helm upgrade --install $(releaseName) flask-app-$TAG.tgz \
                   --namespace $(k8sNamespace) \
                   --set image.repository=$(containerRepoACR) \
                   --set image.tag=$TAG
@@ -111,7 +128,12 @@ stages:
       - bash: |
           echo "Rolling back with Helm to last known-good tag..."
           GOOD_TAG=$(cat $(Pipeline.Workspace)/good_tag.txt)
-          helm upgrade --install $(releaseName) ./helm/flask-app \
+
+          export HELM_EXPERIMENTAL_OCI=1
+          echo "$(GHCR_PAT)" | helm registry login ghcr.io -u sadiqms --password-stdin
+          helm pull oci://$(chartRepo) --version $GOOD_TAG
+
+          helm upgrade --install $(releaseName) flask-app-$GOOD_TAG.tgz \
             --namespace $(k8sNamespace) \
             --set image.repository=$(containerRepoECR) \
             --set image.tag=$GOOD_TAG

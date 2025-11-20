@@ -1,1 +1,0 @@
-{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"container_host","Source":"../../modules/azure_container_host","Dir":"../../modules/azure_container_host"},{"Key":"frontdoor","Source":"../../modules/azure_cdn_frontdoor","Dir":"../../modules/azure_cdn_frontdoor"},{"Key":"static_site","Source":"../../modules/azure_static_site","Dir":"../../modules/azure_static_site"}]}

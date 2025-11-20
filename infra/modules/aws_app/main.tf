@@ -54,8 +54,8 @@ resource "aws_security_group" "alb" {
   vpc_id = aws_vpc.main.id
 
   ingress {
-    from_port   = 80
-    to_port     = 80
+    from_port   = 8080
+    to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -104,7 +104,7 @@ resource "aws_lb" "app" {
 
 resource "aws_lb_target_group" "app" {
   name        = "${var.alb_name}-tg"
-  port        = 80
+  port        = 8080
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = aws_vpc.main.id
@@ -176,8 +176,8 @@ resource "aws_ecs_task_definition" "app" {
       essential = true,
       portMappings = [
         {
-          containerPort = 80,
-          hostPort      = 80,
+          containerPort = 8080,
+          hostPort      = 8080,
           protocol      = "tcp"
         }
       ],
@@ -207,7 +207,7 @@ resource "aws_ecs_service" "app" {
   load_balancer {
     target_group_arn = aws_lb_target_group.app.arn
     container_name   = "app"
-    container_port   = 80
+    container_port   = 8080
   }
 
   tags = var.tags
